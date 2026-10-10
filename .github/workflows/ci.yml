@@ -1,0 +1,52 @@
+# CI for todomcp: build, format-check, test, and a non-pushing Docker build
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    # Weekly sweep to catch upstream breakage when nobody is pushing
+    - cron: "17 3 * * 1"
+
+permissions:
+  contents: read
+
+jobs:
+  # Stable name so branch protection has one required status check to point at
+  ci:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Review dependency changes
+        if: github.event_name == 'pull_request'
+        uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          dotnet-version: "10.0.100"
+
+      # Restore using the committed lockfile so the PR can't silently change deps
+      - name: Restore (locked)
+        run: dotnet restore TodoMcp.slnx --locked-mode
+
+      - name: Build (warnings as errors)
+        run: dotnet build TodoMcp.slnx -c Release --no-restore -warnaserror
+
+      - name: Verify formatting
+        run: dotnet format --verify-no-changes TodoMcp.slnx
+
+      - name: Run tests
+        run: dotnet test TodoMcp.slnx -c Release --no-build --logger "trx;LogFileName=results.trx"
+
+      # Build the image without pushing so a broken Dockerfile fails the PR
+      - name: Build Docker image (no push)
+        run: |
+          docker build \
+            --tag todomcp:ci \
+            --file Dockerfile \
+            .

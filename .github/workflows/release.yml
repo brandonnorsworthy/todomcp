@@ -1,0 +1,126 @@
+# Build the todomcp image and push it to GHCR.
+# Triggered by pushes to main (tags: latest + git sha) and by v* tag pushes
+# (tags: X.Y.Z + git sha) — per docs/public-repos.md, releases are "tag vX.Y.Z
+# on a green main," so tag pushes and main pushes both publish.
+#
+# Gating: the `release` job needs the `ci` job in this same workflow (per
+# public-repos.md: "Gate: needs: ci; only packages: write on the publishing
+# job"). Only `release` gets `packages: write`.
+name: release
+
+on:
+  push:
+    branches: [main]
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.sha }}
+  cancel-in-progress: false
+
+jobs:
+  ci:
+    # Restore/build/test + non-pushing docker build. Must pass before any
+    # publish step runs.
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          dotnet-version: "10.0.100"
+
+      - name: Restore (locked)
+        run: dotnet restore TodoMcp.slnx --locked-mode
+
+      - name: Build (warnings as errors)
+        run: dotnet build TodoMcp.slnx -c Release --no-restore -warnaserror
+
+      - name: Verify formatting
+        run: dotnet format --verify-no-changes TodoMcp.slnx
+
+      - name: Run tests
+        run: dotnet test TodoMcp.slnx -c Release --no-build
+
+      - name: Build Docker image (no push)
+        run: docker build --tag todomcp:ci --file Dockerfile .
+
+  release:
+    needs: ci
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: Log in to GHCR
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata (tags + labels)
+        id: meta
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/todomcp
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=semver,pattern={{version}}
+            type=sha
+
+      - name: Build & push image
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64
+
+      # All tags in `meta.outputs.tags` point at the same image digest, so one
+      # is enough to scan; take the first (semver on v* pushes, else latest/sha).
+      # Pull it locally (auth is already set by docker/login-action) so the
+      # scan runs against the published image.
+      - name: Pick a tag to scan
+        id: scantag
+        env:
+          TAGS: ${{ steps.meta.outputs.tags }}
+        run: |
+          tag=$(printf '%s\n' "$TAGS" | head -n1)
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          docker pull ghcr.io/${{ github.repository_owner }}/todomcp:"$tag"
+
+      - name: Trivy scan (HIGH/CRITICAL, ignore-unfixed)
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: ghcr.io/${{ github.repository_owner }}/todomcp:${{ steps.scantag.outputs.tag }}
+          ignore-unfixed: true
+          format: table
+          output: trivy-report.txt
+          exit-code: "1"
+          severity: HIGH,CRITICAL
+          scanners: vuln,secret,misconfig
+
+      - name: Upload Trivy report
+        if: always()
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        with:
+          name: trivy-report
+          path: trivy-report.txt
