@@ -1,17 +1,16 @@
 # Stage 1: build the app using the .NET SDK image
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
-# Set the working directory for subsequent instructions
-WORKDIR /src
+WORKDIR /code
 # Copy only the project file first so dotnet restore is cached
 # separately from the source code (re-runs only when deps change)
-COPY TodoMcp.csproj .
+COPY src/TodoMcp.csproj src/TodoMcp.csproj
 # Download NuGet packages referenced by the csproj
-RUN dotnet restore
+RUN dotnet restore src/TodoMcp.csproj
 # Now copy the full source code
 COPY . .
 # Compile and publish a Release build to /app/publish;
 # UseAppHost=false skips the apphost native binary (we launch via `dotnet`)
-RUN dotnet publish -c Release -o /app/publish /p:UseAppHost=false
+RUN dotnet publish src/TodoMcp.csproj -c Release -o /app/publish /p:UseAppHost=false
 
 # Stage 2: lean runtime image (no SDK, no compiler)
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
@@ -19,9 +18,7 @@ FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 RUN apt-get update \
     && apt-get install -y --no-install-recommends curl \
     && rm -rf /var/lib/apt/lists/*
-# Working directory for the app
 WORKDIR /app
-# Copy the published build output from the build stage
 COPY --from=build /app/publish .
 # Bind the server to all interfaces on port 8080
 ENV ASPNETCORE_URLS=http://+:8080

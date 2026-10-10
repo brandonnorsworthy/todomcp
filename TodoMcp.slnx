@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="src/TodoMcp.csproj" />
+  <Project Path="tests/TodoMcp.Tests.csproj" />
+</Solution>
