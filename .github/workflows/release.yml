@@ -95,22 +95,25 @@ jobs:
           platforms: linux/amd64
 
       # All tags in `meta.outputs.tags` point at the same image digest, so one
-      # is enough to scan; take the first (semver on v* pushes, else latest/sha).
-      # Pull it locally (auth is already set by docker/login-action) so the
-      # scan runs against the published image.
+      # is enough to scan. Prefer the immutable `sha-*` tag so the scan survives
+      # a later re-push to `latest`. `docker/metadata-action` multi-line outputs
+      # carry CRLF line endings, so strip stray \r before splitting on \n.
+      # Pull the image locally (auth is set by docker/login-action) so the scan
+      # runs against the published artifact.
       - name: Pick a tag to scan
         id: scantag
         env:
           TAGS: ${{ steps.meta.outputs.tags }}
         run: |
-          tag=$(printf '%s\n' "$TAGS" | head -n1)
-          echo "tag=$tag" >> "$GITHUB_OUTPUT"
-          docker pull ghcr.io/${{ github.repository_owner }}/todomcp:"$tag"
+          cleaned=$(printf '%s\n' "$TAGS" | tr -d '\r')
+          ref=$(printf '%s\n' "$cleaned" | grep -m1 'sha-' || printf '%s\n' "$cleaned" | head -n1)
+          echo "ref=$ref" >> "$GITHUB_OUTPUT"
+          docker pull "$ref"
 
       - name: Trivy scan (HIGH/CRITICAL, ignore-unfixed)
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
-          image-ref: ghcr.io/${{ github.repository_owner }}/todomcp:${{ steps.scantag.outputs.tag }}
+          image-ref: ${{ steps.scantag.outputs.ref }}
           ignore-unfixed: true
           format: table
           output: trivy-report.txt
@@ -124,3 +127,4 @@ jobs:
         with:
           name: trivy-report
           path: trivy-report.txt
+          if-no-files-found: ignore
