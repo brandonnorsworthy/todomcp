@@ -4,6 +4,7 @@ using System.Text;
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
+using TodoMcp.Repositories;
 
 namespace TodoMcp.Tests;
 
@@ -17,7 +18,7 @@ public class McpEndpointTests : IClassFixture<WebApplicationFactory<Program>>
     public McpEndpointTests(WebApplicationFactory<Program> factory)
     {
         _client = factory.WithWebHostBuilder(b => b.ConfigureServices(s =>
-            s.AddSingleton<ITodoStore, InMemoryTodoStore>())).CreateClient();
+            s.AddSingleton<ITodoRepository, InMemoryTodoRepository>())).CreateClient();
     }
 
     [Fact]

@@ -1,9 +1,10 @@
-using TodoMcp;
+using TodoMcp.Models;
+using TodoMcp.Repositories;
 
 namespace TodoMcp.Tests;
 
-/// <summary>Test double so the endpoint tests need no database. Mirrors PgTodoStore's ordering rules.</summary>
-public sealed class InMemoryTodoStore : ITodoStore
+/// <summary>Test double so the endpoint tests need no database. Mirrors PgTodoRepository's ordering rules.</summary>
+public sealed class InMemoryTodoRepository : ITodoRepository
 {
     private readonly List<Todo> _items = []; // kept in priority order per project
     private long _next = 1;

@@ -1,6 +1,8 @@
 using Microsoft.Extensions.Configuration;
 using Npgsql;
-using TodoMcp;
+using TodoMcp.Data;
+using TodoMcp.Models;
+using TodoMcp.Repositories;
 
 namespace TodoMcp.Tests;
 
@@ -8,7 +10,7 @@ namespace TodoMcp.Tests;
 /// Runs the real SQL against Postgres. Set TODOMCP_TEST_PG to a connection string whose role can
 /// create tables in a scratch database; skipped otherwise. The Migrator DDL is applied first.
 /// </summary>
-public class PgTodoStoreTests
+public class PgTodoRepositoryTests
 {
     [Fact]
     public async Task Ordering_InsertMoveNext_RoundTrip()
@@ -29,7 +31,7 @@ public class PgTodoStoreTests
         await migrator.StartAsync(ct);
         await migrator.StartAsync(ct); // idempotent
 
-        var store = new PgTodoStore(db);
+        var store = new PgTodoRepository(db);
         var a = await store.AddAsync("stacks", "a", null, ct);
         var c = await store.AddAsync("Stacks", "c", null, ct);
         var b = await store.AddAsync("stacks", "b", 2, ct);

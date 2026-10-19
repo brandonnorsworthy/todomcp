@@ -1,4 +1,5 @@
-using TodoMcp;
+using TodoMcp.Services;
+using TodoMcp.Tools;
 
 namespace TodoMcp.Tests;
 
@@ -6,7 +7,7 @@ namespace TodoMcp.Tests;
 public class TodoToolsTests
 {
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
-    private readonly TodoTools _tools = new(new InMemoryTodoStore());
+    private readonly TodoTools _tools = new(new TodoService(new InMemoryTodoRepository()));
 
     [Fact]
     public async Task Add_DefaultsToInboxAndAppends()

@@ -56,7 +56,7 @@ When finished it will be:
   - Todos belong to a project (auto-created, default `Inbox`) and are ordered by priority
   - `add_todo` can insert at any position; `move_todo` re-ranks or moves across projects;
     `next_todo` answers "what's next on project X"; `list_projects` shows counts
-  - Existing todos migrate into `Inbox`; `PgTodoStoreTests` runs the real SQL when
+  - Existing todos migrate into `Inbox`; `PgTodoRepositoryTests` runs the real SQL when
     `TODOMCP_TEST_PG` is set
 - **Phase 4 — Hardening.** ← next
   - Structured logging, request logging, timeout & cancellation plumbing
