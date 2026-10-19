@@ -83,7 +83,9 @@ public class McpEndpointTests : IClassFixture<WebApplicationFactory<Program>>
     [Fact]
     public async Task Mcp_GetVersion_ReturnsVersionText()
     {
-        Assert.Equal(VersionResolver.ReadVersion(), await CallTool("get_version", new { }));
+        var version = await CallTool("get_version", new { });
+        Assert.Equal(VersionResolver.ReadVersion(), version);
+        Assert.Matches(@"^\d+\.\d+\.\d+$", version);
     }
 
     [Fact]

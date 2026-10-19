@@ -8,11 +8,9 @@ COPY src/TodoMcp.csproj src/TodoMcp.csproj
 RUN dotnet restore src/TodoMcp.csproj
 # Now copy the full source code
 COPY . .
-# Git version (tag/sha) reported by the get_version tool; .git is not in the build context
-ARG GIT_VERSION=dev
 # Compile and publish a Release build to /app/publish;
 # UseAppHost=false skips the apphost native binary (we launch via `dotnet`)
-RUN dotnet publish src/TodoMcp.csproj -c Release -o /app/publish /p:UseAppHost=false /p:InformationalVersion=${GIT_VERSION}
+RUN dotnet publish src/TodoMcp.csproj -c Release -o /app/publish /p:UseAppHost=false
 
 # Stage 2: lean runtime image (no SDK, no compiler)
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
