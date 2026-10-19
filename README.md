@@ -33,7 +33,7 @@ When finished it will be:
 - `GET /health` → `Healthy`
 - MCP `hello(name)` → `"Hello, <name>!"`
 - MCP `get_flag()` → the flag configured via `Flag:Value` / `FLAG` env var
-- MCP `get_version()` → the release version (e.g. `0.3.1`), set by `<Version>` in `src/TodoMcp.csproj`; bump it when tagging a release
+- MCP `get_version()` → the release version (e.g. `0.3.2`), set by `<Version>` in `src/TodoMcp.csproj`; bump it when tagging a release
 - MCP `add_todo(text)` / `list_todos(includeDone)` / `complete_todo(id)` / `delete_todo(id)` → persisted in Postgres
 - Strongly-typed DTOs at the tool boundary, validated
 - Docker image built and scanned in CI/release, pushed to GHCR
