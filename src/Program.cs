@@ -16,7 +16,7 @@ builder.Services.AddSingleton<ITodoService, TodoService>();
 builder.Services
     .AddMcpServer()
     .WithHttpTransport(o => o.Stateless = true)
-    .WithToolsFromAssembly(typeof(HelloTools).Assembly);
+    .WithToolsFromAssembly(typeof(DiagnosticsTools).Assembly);
 
 var app = builder.Build();
 

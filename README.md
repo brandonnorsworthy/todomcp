@@ -14,7 +14,7 @@ When finished it will be:
 - **A .NET 10 Web app** that serves MCP over HTTP SSE (the AspNetCore MCP
   integration), packaged as a single Docker image.
 - **A stable tool contract:** `hello` (echo a name), `get_flag` (return the
-  flag from config), and `add_todo` / `list_todos` / `complete_todo` / `delete_todo` (a
+  flag from config), `get_version` (the git version the server was built from), and `add_todo` / `list_todos` / `complete_todo` / `delete_todo` (a
   Postgres-backed todo list)
   plus `next_todo`, `move_todo`, `list_projects` for per-project priority lists. Tools are validated at the API boundary.
 - **Deployable anywhere** a container runs, with the compose file choosing the
@@ -33,6 +33,7 @@ When finished it will be:
 - `GET /health` → `Healthy`
 - MCP `hello(name)` → `"Hello, <name>!"`
 - MCP `get_flag()` → the flag configured via `Flag:Value` / `FLAG` env var
+- MCP `get_version()` → the git tag + commit the image was built from (`dev` locally)
 - MCP `add_todo(text)` / `list_todos(includeDone)` / `complete_todo(id)` / `delete_todo(id)` → persisted in Postgres
 - Strongly-typed DTOs at the tool boundary, validated
 - Docker image built and scanned in CI/release, pushed to GHCR

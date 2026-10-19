@@ -93,6 +93,8 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           platforms: linux/amd64
+          build-args: |
+            GIT_VERSION=${{ github.ref_name }}+${{ github.sha }}
 
       # All tags in `meta.outputs.tags` point at the same image digest, so one
       # is enough to scan. Prefer the immutable `sha-*` tag so the scan survives

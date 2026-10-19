@@ -81,6 +81,12 @@ public class McpEndpointTests : IClassFixture<WebApplicationFactory<Program>>
     }
 
     [Fact]
+    public async Task Mcp_GetVersion_ReturnsVersionText()
+    {
+        Assert.Equal(VersionResolver.ReadVersion(), await CallTool("get_version", new { }));
+    }
+
+    [Fact]
     public async Task Mcp_Todos_AddListCompleteDelete_RoundTrip()
     {
         Assert.Contains("Saved: [1] change the front lightbulb", await CallTool("add_todo", new { text = "change the front lightbulb" }));
