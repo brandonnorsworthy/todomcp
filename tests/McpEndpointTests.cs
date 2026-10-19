@@ -3,6 +3,7 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace TodoMcp.Tests;
 
@@ -15,7 +16,8 @@ public class McpEndpointTests : IClassFixture<WebApplicationFactory<Program>>
 
     public McpEndpointTests(WebApplicationFactory<Program> factory)
     {
-        _client = factory.CreateClient();
+        _client = factory.WithWebHostBuilder(b => b.ConfigureServices(s =>
+            s.AddSingleton<ITodoStore, InMemoryTodoStore>())).CreateClient();
     }
 
     [Fact]
@@ -75,6 +77,27 @@ public class McpEndpointTests : IClassFixture<WebApplicationFactory<Program>>
         var content = result.GetProperty("content").EnumerateArray().ToArray();
         Assert.Single(content);
         Assert.Equal(DefaultFlag, content[0].GetProperty("text").GetString());
+    }
+
+    [Fact]
+    public async Task Mcp_Todos_AddListCompleteDelete_RoundTrip()
+    {
+        Assert.Contains("Saved: [1] change the front lightbulb", await CallTool("add_todo", new { text = "change the front lightbulb" }));
+        Assert.Contains("[1] change the front lightbulb", await CallTool("list_todos", new { }));
+        Assert.Contains("Completed: [1]", await CallTool("complete_todo", new { id = 1 }));
+        Assert.Equal("No todos.", await CallTool("list_todos", new { }));
+        Assert.Contains("(done)", await CallTool("list_todos", new { includeDone = true }));
+        Assert.Contains("Deleted todo 1", await CallTool("delete_todo", new { id = 1 }));
+        Assert.StartsWith("Error", await CallTool("delete_todo", new { id = 1 }));
+        Assert.StartsWith("Error", await CallTool("add_todo", new { text = "  " }));
+    }
+
+    private async Task<string> CallTool(string name, object args)
+    {
+        var response = await PostJsonRpc("tools/call", new { name, arguments = args });
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var result = ParseResult(await response.Content.ReadAsStringAsync(Xunit.TestContext.Current.CancellationToken));
+        return result.GetProperty("content")[0].GetProperty("text").GetString()!;
     }
 
     private Task<HttpResponseMessage> PostJsonRpc(string method, object? @params)

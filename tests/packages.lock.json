@@ -430,6 +430,14 @@
           "Microsoft.Extensions.Logging.Abstractions": "10.0.10"
         }
       },
+      "Npgsql": {
+        "type": "Transitive",
+        "resolved": "9.0.3",
+        "contentHash": "tPvY61CxOAWxNsKLEBg+oR646X4Bc8UmyQ/tJszL/7mEmIXQnnBhVJZrZEEUv0Bstu0mEsHZD5At3EO8zQRAYw==",
+        "dependencies": {
+          "Microsoft.Extensions.Logging.Abstractions": "8.0.2"
+        }
+      },
       "System.Diagnostics.EventLog": {
         "type": "Transitive",
         "resolved": "10.0.12",
@@ -505,7 +513,8 @@
       "todomcp": {
         "type": "Project",
         "dependencies": {
-          "ModelContextProtocol.AspNetCore": "[2.2.0, )"
+          "ModelContextProtocol.AspNetCore": "[2.2.0, )",
+          "Npgsql": "[9.0.3, )"
         }
       }
     }

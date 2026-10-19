@@ -1,8 +1,15 @@
 using ModelContextProtocol.Server;
+using Npgsql;
+using TodoMcp;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddHealthChecks();
+builder.Services.AddHostedService<Migrator>();
+builder.Services.AddSingleton(sp =>
+    NpgsqlDataSource.Create(sp.GetRequiredService<IConfiguration>().GetConnectionString("App")
+        ?? throw new InvalidOperationException("ConnectionStrings:App is not configured")));
+builder.Services.AddSingleton<ITodoStore, PgTodoStore>();
 builder.Services
     .AddMcpServer()
     .WithHttpTransport(o => o.Stateless = true)
