@@ -15,7 +15,8 @@ When finished it will be:
   integration), packaged as a single Docker image.
 - **A stable tool contract:** `hello` (echo a name), `get_flag` (return the
   flag from config), and `add_todo` / `list_todos` / `complete_todo` / `delete_todo` (a
-  Postgres-backed todo list). Tools are validated at the API boundary.
+  Postgres-backed todo list)
+  plus `next_todo`, `move_todo`, `list_projects` for per-project priority lists. Tools are validated at the API boundary.
 - **Deployable anywhere** a container runs, with the compose file choosing the
   port. Runs the same in CI, in docker compose, and on the Arcane stack.
 - **Auditable:** every dependency is lockfile-pinned, actions are SHA-pinned,
@@ -51,7 +52,13 @@ When finished it will be:
     (`todomcp_db`; schema created at startup by `todomcp_migrator`, runtime uses
     `todomcp_app`), validation, tests with an in-memory store
   - Verified live: LibreChat + Ollama `qwen3.8:27b` adds and reads todos
-- **Phase 3 — Hardening.** ← next
+- **Phase 3 — Projects & priority lists.** ✅ done (v0.3.0)
+  - Todos belong to a project (auto-created, default `Inbox`) and are ordered by priority
+  - `add_todo` can insert at any position; `move_todo` re-ranks or moves across projects;
+    `next_todo` answers "what's next on project X"; `list_projects` shows counts
+  - Existing todos migrate into `Inbox`; `PgTodoStoreTests` runs the real SQL when
+    `TODOMCP_TEST_PG` is set
+- **Phase 4 — Hardening.** ← next
   - Structured logging, request logging, timeout & cancellation plumbing
 
 ## Getting started
