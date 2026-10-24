@@ -41,7 +41,7 @@ jobs:
         run: dotnet format --verify-no-changes TodoMcp.slnx
 
       - name: Run tests
-        run: dotnet test TodoMcp.slnx -c Release --no-build --logger "trx;LogFileName=results.trx"
+        run: dotnet test TodoMcp.slnx -c Release --no-build
 
       # Build the image without pushing so a broken Dockerfile fails the PR
       - name: Build Docker image (no push)
