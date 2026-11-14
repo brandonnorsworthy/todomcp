@@ -13,7 +13,7 @@ COPY . .
 RUN dotnet publish src/TodoMcp.csproj -c Release -o /app/publish /p:UseAppHost=false
 
 # Stage 2: lean runtime image (no SDK, no compiler)
-FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
+FROM mcr.microsoft.com/dotnet/aspnet:11.0 AS runtime
 # Install curl and clean up the apt lists to keep the image small
 RUN apt-get update \
     && apt-get install -y --no-install-recommends curl \
