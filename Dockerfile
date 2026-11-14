@@ -1,5 +1,5 @@
 # Stage 1: build the app using the .NET SDK image
-FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:11.0 AS build
 WORKDIR /code
 # Copy only the project file first so dotnet restore is cached
 # separately from the source code (re-runs only when deps change)
